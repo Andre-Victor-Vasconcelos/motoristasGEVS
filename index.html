@@ -1,1 +1,217 @@
 
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mural de Recados - Casamento</title>
+  <style>
+    /* Reset básico e estilos essenciais */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #fdf6f0;
+      color: #333;
+      line-height: 1.5;
+      padding: 20px 10px 50px;
+    }
+    section {
+      max-width: 900px;
+      margin: 30px auto;
+      background: #fff7f4;
+      padding: 25px 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgb(216 155 147 / 0.3);
+    }
+    section h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #a33b38;
+      font-family: 'Georgia', serif;
+      font-size: 2rem;
+    }
+    p.text-center {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.1rem;
+    }
+
+    /* ===== Estilos para o Mural de Recados ===== */
+    #mural .form-group {
+      margin-bottom: 15px;
+      text-align: left;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #mural label {
+      display: block;
+      margin-bottom: 5px;
+      color: #a33b38;
+      font-weight: 600;
+    }
+    #mural input, #mural textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #f1b7b1;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 1rem;
+      background: #fff;
+    }
+    #mural .btn-enviar {
+      background: #a33b38;
+      border: none;
+      color: white;
+      font-weight: 700;
+      font-size: 1rem;
+      border-radius: 8px;
+      padding: 12px 25px;
+      cursor: pointer;
+      display: block;
+      margin: 20px auto 30px;
+      box-shadow: 0 0 8px #a33b38aa;
+      transition: background 0.3s ease;
+    }
+    #mural .btn-enviar:hover {
+      background: #800000;
+    }
+    #lista-recados {
+      margin-top: 30px;
+    }
+    #lista-recados .recado {
+      background: #fdf6f0;
+      border: 1px dashed #f1b7b1;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    #lista-recados .recado strong {
+      color: #800000;
+      display: block;
+      margin-bottom: 5px;
+    }
+    #lista-recados .recado p {
+      font-size: 1rem;
+      line-height: 1.6;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+
+<main>
+  <!-- Mural de Recados -->
+  <section id="mural">
+    <h2>Mural de Recados</h2>
+    <p class="text-center">Deixe uma mensagem de carinho para os noivos!</p>
+    <form id="form-recado" aria-labelledby="mural-heading">
+      <div class="form-group">
+        <label for="nome">Seu Nome:</label>
+        <input type="text" id="nome" required>
+      </div>
+      <div class="form-group">
+        <label for="mensagem">Sua Mensagem:</label>
+        <textarea id="mensagem" rows="4" required></textarea>
+      </div>
+      <button type="submit" class="btn-enviar">Enviar Mensagem</button>
+    </form>
+    <div id="lista-recados" aria-live="polite">
+      <p class="text-center">Carregando recados...</p>
+    </div>
+  </section>
+</main>
+
+<!-- SCRIPTS DO FIREBASE PARA O MURAL DE RECADOS -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+<script>
+  // Suas chaves do Firebase já estão aqui.
+  // ATENÇÃO: É recomendado proteger suas chaves de API em um ambiente de produção.
+  const firebaseConfig = {
+    apiKey: "AIzaSyDuspyYy56JxtkKEBzW8V4sZyixCvUWal4",
+    authDomain: "casamento-andre-e-maria.firebaseapp.com",
+    projectId: "casamento-andre-e-maria",
+    storageBucket: "casamento-andre-e-maria.appspot.com",
+    messagingSenderId: "69683342642",
+    appId: "1:69683342642:web:4a686b675fbb870c037b2b",
+    measurementId: "G-H5E8M4VHJH"
+  };
+
+  // O restante do código usa suas chaves para conectar e fazer a mágica.
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const formRecado = document.getElementById('form-recado');
+  const listaRecados = document.getElementById('lista-recados');
+
+  if (formRecado) {
+    formRecado.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nomeInput = document.getElementById('nome');
+      const mensagemInput = document.getElementById('mensagem');
+      const submitButton = formRecado.querySelector('button[type="submit"]');
+
+      submitButton.disabled = true;
+      submitButton.textContent = 'Enviando...';
+
+      db.collection('recados').add({
+        nome: nomeInput.value,
+        mensagem: mensagemInput.value,
+        data: new Date()
+      }).then(() => {
+        formRecado.reset();
+      }).catch((error) => {
+        console.error("Erro ao enviar recado: ", error);
+        alert('Ocorreu um erro ao enviar seu recado. Por favor, tente novamente.');
+      }).finally(() => {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Enviar Mensagem';
+      });
+    });
+  }
+
+  if (listaRecados) {
+    db.collection('recados').orderBy('data', 'desc')
+      .onSnapshot((querySnapshot) => {
+        listaRecados.innerHTML = '';
+        if (querySnapshot.empty) {
+          listaRecados.innerHTML = '<p class="text-center">Nenhum recado ainda. Seja o primeiro a deixar uma mensagem de carinho!</p>';
+          return;
+        }
+        querySnapshot.forEach((doc) => {
+          const recado = doc.data();
+          const recadoElement = document.createElement('div');
+          recadoElement.className = 'recado';
+          
+          const nomeSeguro = document.createElement('strong');
+          nomeSeguro.textContent = recado.nome;
+          
+          const mensagemSegura = document.createElement('p');
+          mensagemSegura.textContent = recado.mensagem;
+
+          recadoElement.appendChild(nomeSeguro);
+          recadoElement.appendChild(mensagemSegura);
+          
+          listaRecados.appendChild(recadoElement);
+        });
+    }, (error) => {
+        console.error("Erro ao carregar recados: ", error);
+        listaRecados.innerHTML = '<p class="text-center">Não foi possível carregar os recados. Tente recarregar a página.</p>';
+    });
+  }
+</script>
+
+</body>
+</html>
